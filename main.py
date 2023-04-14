@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import gspread as gs
 from gspread_dataframe import set_with_dataframe
+from datetime import datetime
 
 load_dotenv()
 
@@ -34,7 +35,7 @@ class jamfAPI:
 
     def get_computer_info(self):
         page = 0
-        size = 100
+        size = 50
         amount = 1000
         all_computers = []
 
@@ -56,19 +57,22 @@ class jamfAPI:
                 hardware = computer["hardware"]
                 os = computer["operatingSystem"]
                 groups = computer["groupMemberships"]
-                storage = computer["storage"]
 
                 new_data["Name"] = general_info["name"]
                 new_data["OS"] = os["version"]
+                new_data["Last_Contact"] = datetime.fromisoformat(general_info["lastContactTime"]).strftime("%m/%d/%Y")
                 new_data["Model"] = hardware["modelIdentifier"]
                 new_data["Serial"] = hardware["serialNumber"]
                 new_data["CPU"] = hardware["processorType"]
                 new_data["RAM"] = hardware["totalRamMegabytes"] // 1000
 
-                drive = storage["disks"][0]["partitions"]
-                if drive:
-                    new_data["HD Size"] = drive[0]["sizeMegabytes"] // 1000
-                    new_data["HD_Free"] = drive[0]["availableMegabytes"] // 1000
+                storage = computer["storage"]["disks"]
+                if storage:
+                    drive = storage[0]["partitions"]
+                    if drive:
+                        new_data["HD Size"] = drive[0]["sizeMegabytes"] // 1000
+                        new_data["HD_Free"] = drive[0]["availableMegabytes"] // 1000
+
                 for app in applications:
                     if app["name"] in self.app_names:
                         new_data[app["name"]] = app["version"]
