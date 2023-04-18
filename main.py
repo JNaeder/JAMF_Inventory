@@ -32,7 +32,7 @@ class jamfAPI:
         self.chi_students = self.spreadsheet.get_worksheet_by_id(679638181)
         self.general_staff = self.spreadsheet.get_worksheet_by_id(1531308029)
         self.no_group = self.spreadsheet.get_worksheet_by_id(904518589)
-        self.app_names = ["Pro Tools.app", "Ableton Live 11 Standard.app", "Logic Pro X.app", "8x8 Work.app",
+        self.app_names = ["Pro Tools.app", "Ableton Live 10 Standard.app", "Ableton Live 11 Standard.app", "Logic Pro X.app", "8x8 Work.app",
                           "Slack.app", "FortiClient.app", "TeamViewer.app",
                           "Zoom.us.app", "UAD Meter & Control Panel.app", "Google Chrome.app"]
         self.group_names = ["NY Student", "MIA Student", "NAS Student", "ATL Student", "CHI Student", "General Staff"]
@@ -90,6 +90,7 @@ class jamfAPI:
                 new_data["Name"] = general_info["name"]
                 new_data["Specs"] = ""
                 new_data["Serial"] = hardware["serialNumber"]
+                new_data["Last IP"] = general_info["lastReportedIp"]
                 last_contact = datetime.fromisoformat(general_info["lastContactTime"])
                 days_since_contact = (datetime.now(timezone.utc) - last_contact).days
                 new_data["Last Contact"] = last_contact.strftime("%m/%d/%Y")
@@ -106,8 +107,9 @@ class jamfAPI:
                     for drive in storage:
                         if drive["device"] == "disk0":
                             for partition in drive["partitions"]:
-                                total_space += partition["sizeMegabytes"] // 1000
-                                available_space += partition["availableMegabytes"] // 1000
+                                if partition["partitionType"] == "BOOT":
+                                    total_space += partition["sizeMegabytes"] // 1000
+                                    available_space += partition["availableMegabytes"] // 1000
                     new_data["Total Space"] = total_space
                     new_data["Available Space"] = available_space
 
