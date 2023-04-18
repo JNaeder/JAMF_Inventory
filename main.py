@@ -65,7 +65,8 @@ class jamfAPI:
         }
 
         while (page * size) < amount:
-            print(f"---Get page {page}---")
+            # print(f"---Get page {page}---")
+            print(".", end="")
             url = self.baseURL + f"/api/v1/computers-inventory?section=GENERAL&section=APPLICATIONS&section=GROUP_MEMBERSHIPS&section=HARDWARE&section=OPERATING_SYSTEM&section=STORAGE&page={page}&page-size={size}&sort=general.name%3Aasc"
             response = self.session.get(url)
             if response.status_code != 200:
@@ -74,7 +75,7 @@ class jamfAPI:
                 continue
             amount = response.json()["totalCount"]
             data = response.json()["results"]
-            print(f"returned {len(data)} items")
+            # print(f"returned {len(data)} items")
             for computer in data:
                 has_group = False
                 new_data = {}
@@ -125,6 +126,16 @@ class jamfAPI:
                     no_group.append(new_data)
                 all_computers.append(new_data)
             page += 1
+
+        print("Clearing Worksheets")
+        self.all_computers.clear()
+        self.ny_students.clear()
+        self.atl_students.clear()
+        self.mia_students.clear()
+        self.nas_students.clear()
+        self.chi_students.clear()
+        self.general_staff.clear()
+        self.no_group.clear()
 
         print("Setting Dataframes")
         set_with_dataframe(self.all_computers, pd.DataFrame(all_computers))
