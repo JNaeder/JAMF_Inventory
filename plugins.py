@@ -9,7 +9,11 @@ load_dotenv()
 
 sheet_url = os.environ.get("GOOGLE_SHEET_URL")
 
-log_files = "G:/Shared Drives/NY Tech Drive/computer_logs"
+# Windows
+# log_files = "G:/Shared Drives/NY Tech Drive/computer_logs"
+# macOS
+log_files = "/Volumes/GoogleDrive/Shared drives/NY Tech Drive/computer_logs"
+
 all_files = os.listdir(log_files)
 
 service_account = gs.service_account("./google_credentials.json")
@@ -19,8 +23,7 @@ worksheet = spreadsheet.get_worksheet_by_id(383527880)
 output = []
 
 for file in all_files:
-    serial_number = file.split(".")[0]
-    new_data = {"Serial Number": serial_number}
+    new_data = {}
     with open(f"{log_files}/{file}", "r") as the_file:
         for line in the_file:
             [plugin_name, plugin_version] = line.split(",")
