@@ -32,9 +32,10 @@ class jamfAPI:
         self.chi_students = self.spreadsheet.get_worksheet_by_id(679638181)
         self.general_staff = self.spreadsheet.get_worksheet_by_id(1531308029)
         self.no_group = self.spreadsheet.get_worksheet_by_id(904518589)
-        self.app_names = ["Pro Tools.app", "Ableton Live 10 Standard.app", "Ableton Live 11 Standard.app", "Logic Pro X.app", "8x8 Work.app",
-                          "Slack.app", "FortiClient.app", "TeamViewer.app",
-                          "Zoom.us.app", "UAD Meter & Control Panel.app", "Google Chrome.app"]
+        self.app_names = ["Pro Tools.app", "Ableton Live 10 Standard.app", "Ableton Live 11 Standard.app",
+                          "Logic Pro X.app", "8x8 Work.app", "Slack.app", "FortiClient.app", "TeamViewer.app",
+                          "Zoom.us.app", "UAD Meter & Control Panel.app", "Google Chrome.app",
+                          "Install macOS Monterey.app"]
         self.group_names = ["NY Student", "MIA Student", "NAS Student", "ATL Student", "CHI Student", "General Staff"]
 
     def get_auth_token(self):
@@ -91,9 +92,10 @@ class jamfAPI:
                 new_data["Specs"] = ""
                 new_data["Serial"] = hardware["serialNumber"]
                 new_data["Last IP"] = general_info["lastReportedIp"]
-                last_contact = datetime.fromisoformat(general_info["lastContactTime"])
-                days_since_contact = (datetime.now(timezone.utc) - last_contact).days
-                new_data["Last Contact"] = last_contact.strftime("%m/%d/%Y")
+                last_contact_time = general_info["lastContactTime"]
+                last_contact = datetime.fromisoformat(last_contact_time) if last_contact_time else None
+                days_since_contact = (datetime.now(timezone.utc) - last_contact).days if last_contact_time else 0
+                new_data["Last Contact"] = last_contact.strftime("%m/%d/%Y") if last_contact_time else None
                 new_data["Days Since Contact"] = days_since_contact
                 new_data["OS"] = operatingSystem["version"]
                 new_data["Model"] = hardware["modelIdentifier"]
@@ -129,7 +131,7 @@ class jamfAPI:
                 all_computers.append(new_data)
             page += 1
 
-        print("Clearing Worksheets")
+        print("\nClearing Worksheets")
         self.all_computers.clear()
         self.ny_students.clear()
         self.atl_students.clear()
