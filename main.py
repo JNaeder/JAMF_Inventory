@@ -92,6 +92,8 @@ class jamfAPI:
                 new_data["Specs"] = ""
                 new_data["Serial"] = hardware["serialNumber"]
                 new_data["Last IP"] = general_info["lastReportedIp"]
+                jamf_binary = general_info["jamfBinaryVersion"]
+                new_data["JAMF Binary"] = jamf_binary.split("-")[0] if jamf_binary else ""
                 last_contact_time = general_info["lastContactTime"]
                 last_contact = datetime.fromisoformat(last_contact_time) if last_contact_time else None
                 days_since_contact = (datetime.now(timezone.utc) - last_contact).days if last_contact_time else 0
