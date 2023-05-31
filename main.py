@@ -11,7 +11,7 @@ load_dotenv()
 
 class jamfAPI:
     def __init__(self):
-        self.baseURL = "https://saena.jamfcloud.com/"
+        self.base_url = "https://saena.jamfcloud.com/"
         self.username = os.environ.get("JAMF_USERNAME")
         self.password = os.environ.get("JAMF_PASSWORD")
         self.sheet_url = os.environ.get("GOOGLE_SHEET_URL")
@@ -24,22 +24,48 @@ class jamfAPI:
         self.data_frame = pd.DataFrame()
         self.service_account = gs.service_account("./google_credentials.json")
         self.spreadsheet = self.service_account.open_by_key(self.sheet_url)
-        self.all_computers = self.spreadsheet.get_worksheet_by_id(0)
-        self.ny_students = self.spreadsheet.get_worksheet_by_id(1745485465)
-        self.atl_students = self.spreadsheet.get_worksheet_by_id(2037246095)
-        self.nas_students = self.spreadsheet.get_worksheet_by_id(60083025)
-        self.mia_students = self.spreadsheet.get_worksheet_by_id(1777779477)
-        self.chi_students = self.spreadsheet.get_worksheet_by_id(679638181)
-        self.general_staff = self.spreadsheet.get_worksheet_by_id(1531308029)
-        self.no_group = self.spreadsheet.get_worksheet_by_id(904518589)
+
+        self.groups = {
+            "All Computers": {
+                "ws_id": 0,
+                "container": []
+            },
+            "NY Student": {
+                "ws_id": 1745485465,
+                "container": []
+            },
+            "MIA Student": {
+                "ws_id": 1777779477,
+                "container": []
+            },
+            "NAS Student": {
+                "ws_id": 60083025,
+                "container": []
+            },
+            "ATL Student": {
+                "ws_id": 2037246095,
+                "container": []
+            },
+            "CHI Student": {
+                "ws_id": 679638181,
+                "container": []
+            },
+            "General Staff": {
+                "ws_id": 1531308029,
+                "container": []
+            },
+            "No Group": {
+                "ws_id": 904518589,
+                "container": []
+            },
+        }
         self.app_names = ["Pro Tools.app", "Ableton Live 10 Standard.app", "Ableton Live 11 Standard.app",
                           "Logic Pro X.app", "8x8 Work.app", "Slack.app", "FortiClient.app", "TeamViewer.app",
                           "Zoom.us.app", "UAD Meter & Control Panel.app", "Google Chrome.app",
                           "Install macOS Monterey.app"]
-        self.group_names = ["NY Student", "MIA Student", "NAS Student", "ATL Student", "CHI Student", "General Staff"]
 
     def get_auth_token(self):
-        url = self.baseURL + "api/v1/auth/token"
+        url = self.base_url + "api/v1/auth/token"
         response = self.session.post(url, auth=(self.username, self.password))
         return response.json()["token"]
 
@@ -47,28 +73,13 @@ class jamfAPI:
         page = 0
         size = 5
         amount = 1000
-        all_computers = []
-        no_group = []
-        ny_students = []
-        mia_students = []
-        nas_students = []
-        atl_students = []
-        chi_students = []
-        general_staff = []
-
-        the_groups = {
-            "NY Student": ny_students,
-            "MIA Student": mia_students,
-            "NAS Student": nas_students,
-            "ATL Student": atl_students,
-            "CHI Student": chi_students,
-            "General Staff": general_staff,
-        }
 
         while (page * size) < amount:
             # print(f"---Get page {page}---")
             print(".", end="")
-            url = self.baseURL + f"/api/v1/computers-inventory?section=GENERAL&section=APPLICATIONS&section=GROUP_MEMBERSHIPS&section=HARDWARE&section=OPERATING_SYSTEM&section=STORAGE&page={page}&page-size={size}&sort=general.name%3Aasc"
+            url = f"/api/v1/computers-inventory?section=GENERAL&section=APPLICATIONS" \
+                  f"&section=GROUP_MEMBERSHIPS&section=HARDWARE&section=OPERATING_SYSTEM" \
+                  f"&section=STORAGE&page={page}&page-size={size}&sort=general.name%3Aasc"
             response = self.session.get(url)
             if response.status_code != 200:
                 print(f"Response code was {response.status_code}")
@@ -124,34 +135,23 @@ class jamfAPI:
                         new_data[app_name] = app["version"].split(" ")[0]
 
                 for group in groups:
-                    if group["groupName"] in self.group_names:
-                        the_groups[group["groupName"]].append(new_data)
+                    if group["groupName"] in self.groups:
+                        group_name = group["groupName"]
+                        group_container = self.groups[group_name]["container"]
+                        group_container.append(new_data)
                         has_group = True
 
                 if not has_group:
-                    no_group.append(new_data)
-                all_computers.append(new_data)
+                    self.groups["No Group"]["container"].append(new_data)
+                self.groups["All Computers"]["container"].append(new_data)
             page += 1
 
-        print("\nClearing Worksheets")
-        self.all_computers.clear()
-        self.ny_students.clear()
-        self.atl_students.clear()
-        self.mia_students.clear()
-        self.nas_students.clear()
-        self.chi_students.clear()
-        self.general_staff.clear()
-        self.no_group.clear()
-
-        print("Setting Dataframes")
-        set_with_dataframe(self.all_computers, pd.DataFrame(all_computers))
-        set_with_dataframe(self.ny_students, pd.DataFrame(ny_students))
-        set_with_dataframe(self.atl_students, pd.DataFrame(atl_students))
-        set_with_dataframe(self.mia_students, pd.DataFrame(mia_students))
-        set_with_dataframe(self.nas_students, pd.DataFrame(nas_students))
-        set_with_dataframe(self.chi_students, pd.DataFrame(chi_students))
-        set_with_dataframe(self.general_staff, pd.DataFrame(general_staff))
-        set_with_dataframe(self.no_group, pd.DataFrame(no_group))
+        for group_name, items in self.groups.items():
+            ws_id = items["ws_id"]
+            container = items["container"]
+            ss = self.spreadsheet.get_worksheet_by_id(ws_id)
+            ss.clear()
+            set_with_dataframe(ss, pd.DataFrame(container))
 
 
 if __name__ == "__main__":
