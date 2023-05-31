@@ -77,9 +77,9 @@ class jamfAPI:
         while (page * size) < amount:
             # print(f"---Get page {page}---")
             print(".", end="")
-            url = f"/api/v1/computers-inventory?section=GENERAL&section=APPLICATIONS" \
-                  f"&section=GROUP_MEMBERSHIPS&section=HARDWARE&section=OPERATING_SYSTEM" \
-                  f"&section=STORAGE&page={page}&page-size={size}&sort=general.name%3Aasc"
+            url = self.base_url + f"/api/v1/computers-inventory?section=GENERAL&section=APPLICATIONS" \
+                                  f"&section=GROUP_MEMBERSHIPS&section=HARDWARE&section=OPERATING_SYSTEM" \
+                                  f"&section=STORAGE&page={page}&page-size={size}&sort=general.name%3Aasc"
             response = self.session.get(url)
             if response.status_code != 200:
                 print(f"Response code was {response.status_code}")
