@@ -41,13 +41,13 @@ class JamfAPI:
 
         self.groups = {
             "All Computers": {"ws_id": 0, "container": []},
-            "NY Student": {"ws_id": 1745485465, "container": []},
-            "MIA Student": {"ws_id": 1777779477, "container": []},
-            "NAS Student": {"ws_id": 60083025, "container": []},
-            "ATL Student": {"ws_id": 2037246095, "container": []},
-            "CHI Student": {"ws_id": 679638181, "container": []},
-            "General Staff": {"ws_id": 1531308029, "container": []},
-            "No Group": {"ws_id": 904518589, "container": []},
+            "NY Student": {"ws_id": 2007300303, "container": []},
+            "MIA Student": {"ws_id": 108807186, "container": []},
+            "NAS Student": {"ws_id": 1784935395, "container": []},
+            "ATL Student": {"ws_id": 43197857, "container": []},
+            "CHI Student": {"ws_id": 1825908811, "container": []},
+            "General Staff": {"ws_id": 160467683, "container": []},
+            "No Group": {"ws_id": 1822520265, "container": []},
         }
         self.app_names = ["Pro Tools.app", "Ableton Live 10 Standard.app",
                           "Ableton Live 11 Standard.app",
