@@ -12,8 +12,95 @@ import gspread as gs
 from gspread_dataframe import set_with_dataframe
 from datetime import datetime, timezone
 from typing import Dict, List
+from app_names import app_names
 
 load_dotenv()
+
+
+class Computer:
+    def __init__(self, machine):
+        self.machine: Dict = machine
+        self.has_group: bool = False,
+        self.new_data: Dict[str, str] = {}
+        self.general_info = self.machine["general"]
+        self.applications = self.machine["applications"]
+        self.applications.sort(key=lambda x: x["name"])
+        self.hardware = self.machine["hardware"]
+        self.operating_system = self.machine["operatingSystem"]
+        self.groups = self.machine["groupMemberships"]
+        self.write_new_data()
+        self.get_apps()
+
+    def get_contact_time(self):
+        last_contact_time = self.general_info["lastContactTime"]
+        last_contact = datetime.fromisoformat(
+            last_contact_time) if last_contact_time else None
+        days_since_contact = (datetime.now(
+            timezone.utc) - last_contact).days if last_contact_time \
+            else 0
+        return last_contact_time, last_contact, days_since_contact
+
+    def get_hd_data(self) -> (int, int):
+        """
+        Parses through the disk info to return relevant disk space.
+        :return: Tuple containing the total space and available space.
+        """
+        storage = self.machine["storage"]["disks"]
+        total_space = 0
+        available_space = 0
+        if storage:
+            for drive in storage:
+                if drive["device"] == "disk0":
+                    for partition in drive["partitions"]:
+                        if partition["partitionType"] == "BOOT":
+                            total_space += partition[
+                                               "sizeMegabytes"] // 1000
+                            available_space += partition[
+                                                   "availableMegabytes"] // 1000
+        return total_space, available_space
+
+    def get_apps(self):
+        self.new_data["Apps"] = ""
+        for app in self.applications:
+            if app["name"] in app_names:
+                app_name = app["name"].replace(".app", "")
+                self.new_data[app_name] = app["version"].split(" ")[0]
+
+    def write_new_data(self):
+        last_contact_time, \
+            last_contact, \
+            days_since_contact = self.get_contact_time()
+        total_space, available_space = self.get_hd_data()
+
+        self.new_data["Name"] = self.general_info["name"]
+        self.new_data["Serial"] = self.hardware["serialNumber"]
+        self.new_data["Days Since Contact"] = days_since_contact
+        self.new_data["Specs"] = ""
+        self.new_data["Last IP"] = self.general_info["lastReportedIp"]
+        jamf_binary = self.general_info["jamfBinaryVersion"]
+        self.new_data["JAMF Binary"] = jamf_binary.split("-")[
+            0] if jamf_binary else ""
+        self.new_data["Last Contact"] = last_contact.strftime(
+            "%m/%d/%Y") if last_contact_time else None
+        self.new_data["OS"] = self.operating_system["version"]
+        self.new_data["Model"] = self.hardware["modelIdentifier"]
+        self.new_data["CPU"] = self.hardware["processorType"]
+        self.new_data["RAM"] = self.hardware["totalRamMegabytes"] // 1000
+        self.new_data["Total Space"] = total_space
+        self.new_data["Available Space"] = available_space
+
+    def write_to_group(self, jamf_groups):
+        for group in self.groups:
+            if group["groupName"] in jamf_groups:
+                group_name = group["groupName"]
+                group_container = jamf_groups[group_name]["container"]
+                group_container.append(self.new_data)
+                self.has_group = True
+
+        if not self.has_group:
+            jamf_groups["No Group"]["container"].append(self.new_data)
+
+        jamf_groups["All Computers"]["container"].append(self.new_data)
 
 
 class JamfAPI:
@@ -32,7 +119,6 @@ class JamfAPI:
             "Authorization": f"Bearer {self.auth_token}",
             "Content-Type": "application/json"
         }
-        self.data_frame = pd.DataFrame()
         self.service_account = gs.service_account("./google_credentials.json")
         self.spreadsheet = self.service_account.open_by_key(self.sheet_url)
         self.amount = 1000
@@ -49,12 +135,6 @@ class JamfAPI:
             "General Staff": {"ws_id": 160467683, "container": []},
             "No Group": {"ws_id": 1822520265, "container": []},
         }
-        self.app_names = ["Pro Tools.app", "Ableton Live 10 Standard.app",
-                          "Ableton Live 11 Standard.app",
-                          "Logic Pro X.app", "8x8 Work.app",
-                          "Slack.app", "FortiClient.app", "TeamViewer.app",
-                          "Zoom.us.app", "UAD Meter & Control Panel.app",
-                          "Google Chrome.app", "Install macOS Monterey.app"]
 
     def get_auth_token(self):
         url = self.base_url + "api/v1/auth/token"
@@ -86,104 +166,27 @@ class JamfAPI:
         data = response.json()["results"]
         return data
 
-    @staticmethod
-    def get_hd_data(computer: Dict) -> (int, int):
-        """
-        Parses through the disk info to return relevant disk space.
-        :param computer: Dict of a computer
-        :return: Tuple containing the total space and available space.
-        """
-        storage = computer["storage"]["disks"]
-        total_space = 0
-        available_space = 0
-        if storage:
-            for drive in storage:
-                if drive["device"] == "disk0":
-                    for partition in drive["partitions"]:
-                        if partition["partitionType"] == "BOOT":
-                            total_space += partition[
-                                               "sizeMegabytes"] // 1000
-                            available_space += partition[
-                                                   "availableMegabytes"] // 1000
-        return total_space, available_space
-
-    def get_computer_info(self):
-
-        while (self.current_page * self.size) < self.amount:
-            data = self.api_request()
-
-            if data is None:
-                self.current_page += 1
-                continue
-
-            for computer in data:
-                # TODO: Do something with this
-                has_group = False
-                new_data = {}
-                general_info = computer["general"]
-                applications = computer["applications"]
-                applications.sort(key=lambda x: x["name"])
-                hardware = computer["hardware"]
-                operating_system = computer["operatingSystem"]
-                groups = computer["groupMemberships"]
-
-                # TODO: Make this a function
-                last_contact_time = general_info["lastContactTime"]
-                last_contact = datetime.fromisoformat(
-                    last_contact_time) if last_contact_time else None
-                days_since_contact = (datetime.now(
-                    timezone.utc) - last_contact).days if last_contact_time \
-                    else 0
-
-                # TODO: Make this a function
-                new_data["Name"] = general_info["name"]
-                new_data["Serial"] = hardware["serialNumber"]
-                new_data["Days Since Contact"] = days_since_contact
-                new_data["Specs"] = ""
-                new_data["Last IP"] = general_info["lastReportedIp"]
-                jamf_binary = general_info["jamfBinaryVersion"]
-                new_data["JAMF Binary"] = jamf_binary.split("-")[
-                    0] if jamf_binary else ""
-                new_data["Last Contact"] = last_contact.strftime(
-                    "%m/%d/%Y") if last_contact_time else None
-                new_data["OS"] = operating_system["version"]
-                new_data["Model"] = hardware["modelIdentifier"]
-                new_data["CPU"] = hardware["processorType"]
-                new_data["RAM"] = hardware["totalRamMegabytes"] // 1000
-
-                total_space, available_space = self.get_hd_data(computer)
-                new_data["Total Space"] = total_space
-                new_data["Available Space"] = available_space
-
-                # TODO: Make this a function
-                new_data["Apps"] = ""
-                for app in applications:
-                    if app["name"] in self.app_names:
-                        app_name = app["name"].replace(".app", "")
-                        new_data[app_name] = app["version"].split(" ")[0]
-
-                # TODO: This too a function
-                for group in groups:
-                    if group["groupName"] in self.groups:
-                        group_name = group["groupName"]
-                        group_container = self.groups[group_name]["container"]
-                        group_container.append(new_data)
-                        has_group = True
-
-                if not has_group:
-                    self.groups["No Group"]["container"].append(new_data)
-                self.groups["All Computers"]["container"].append(new_data)
-            self.current_page += 1
-
-        # TODO: Make this a separate function too
+    def write_to_google_sheets(self):
         print("\nWriting to Google Sheets")
-        for group_name, items in self.groups.items():
+        for items in self.groups.values():
             ws_id = items["ws_id"]
             container = items["container"]
             ss = self.spreadsheet.get_worksheet_by_id(ws_id)
             ss.clear()
             set_with_dataframe(ss, pd.DataFrame(container))
         print("Done!")
+
+    def get_computer_info(self):
+        while (self.current_page * self.size) < self.amount:
+            data = self.api_request()
+            if data is None:
+                self.current_page += 1
+                continue
+            for machine in data:
+                computer = Computer(machine=machine)
+                computer.write_to_group(self.groups)
+            self.current_page += 1
+        self.write_to_google_sheets()
 
 
 if __name__ == "__main__":
