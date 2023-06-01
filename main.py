@@ -1,3 +1,9 @@
+"""
+JAMF-INVENTORY
+Author: John Naeder
+
+"""
+
 import requests
 from dotenv import load_dotenv
 import os
@@ -10,7 +16,10 @@ from typing import Dict
 load_dotenv()
 
 
-class jamfAPI:
+class JamfAPI:
+    """
+    Main JAMF API class
+    """
     def __init__(self):
         self.base_url = "https://saena.jamfcloud.com/"
         self.username = os.environ.get("JAMF_USERNAME")
@@ -39,10 +48,12 @@ class jamfAPI:
             "General Staff": {"ws_id": 1531308029, "container": []},
             "No Group": {"ws_id": 904518589, "container": []},
         }
-        self.app_names = ["Pro Tools.app", "Ableton Live 10 Standard.app", "Ableton Live 11 Standard.app",
-                          "Logic Pro X.app", "8x8 Work.app", "Slack.app", "FortiClient.app", "TeamViewer.app",
-                          "Zoom.us.app", "UAD Meter & Control Panel.app", "Google Chrome.app",
-                          "Install macOS Monterey.app"]
+        self.app_names = ["Pro Tools.app", "Ableton Live 10 Standard.app",
+                          "Ableton Live 11 Standard.app",
+                          "Logic Pro X.app", "8x8 Work.app",
+                          "Slack.app", "FortiClient.app", "TeamViewer.app",
+                          "Zoom.us.app", "UAD Meter & Control Panel.app",
+                          "Google Chrome.app", "Install macOS Monterey.app"]
 
     def get_auth_token(self):
         url = self.base_url + "api/v1/auth/token"
@@ -55,9 +66,16 @@ class jamfAPI:
         :return: Dictionary of the http response Dataa
         """
         print(".", end=("" if self.current_page % 40 != 0 else "\n"))
-        url = self.base_url + f"/api/v1/computers-inventory?section=GENERAL&section=APPLICATIONS" \
-                              f"&section=GROUP_MEMBERSHIPS&section=HARDWARE&section=OPERATING_SYSTEM" \
-                              f"&section=STORAGE&page={self.current_page}&page-size={self.size}&sort=general.name%3Aasc"
+        url = self.base_url + f"/api/v1/computers-inventory" \
+                              f"?section=GENERAL" \
+                              f"&section=APPLICATIONS" \
+                              f"&section=GROUP_MEMBERSHIPS" \
+                              f"&section=HARDWARE" \
+                              f"&section=OPERATING_SYSTEM" \
+                              f"&section=STORAGE" \
+                              f"&page={self.current_page}" \
+                              f"&page-size={self.size}" \
+                              f"&sort=general.name%3Aasc"
         response = self.session.get(url)
         if response.status_code != 200:
             print(f"Response code was {response.status_code}")
@@ -82,7 +100,7 @@ class jamfAPI:
                 applications = computer["applications"]
                 applications.sort(key=lambda x: x["name"])
                 hardware = computer["hardware"]
-                operatingSystem = computer["operatingSystem"]
+                operating_system = computer["operatingSystem"]
                 groups = computer["groupMemberships"]
 
                 # TODO: Make this a function
@@ -97,7 +115,7 @@ class jamfAPI:
                 days_since_contact = (datetime.now(timezone.utc) - last_contact).days if last_contact_time else 0
                 new_data["Last Contact"] = last_contact.strftime("%m/%d/%Y") if last_contact_time else None
                 new_data["Days Since Contact"] = days_since_contact
-                new_data["OS"] = operatingSystem["version"]
+                new_data["OS"] = operating_system["version"]
                 new_data["Model"] = hardware["modelIdentifier"]
                 new_data["CPU"] = hardware["processorType"]
                 new_data["RAM"] = hardware["totalRamMegabytes"] // 1000
@@ -147,5 +165,5 @@ class jamfAPI:
 
 
 if __name__ == "__main__":
-    jamf = jamfAPI()
+    jamf = JamfAPI()
     jamf.get_computer_info()
