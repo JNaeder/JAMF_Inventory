@@ -1,0 +1,5 @@
+.env
+Dockerfile
+google_credentials.json
+pylintrc
+README.md
