@@ -2,12 +2,12 @@
 Module Name: google_sheets.py
 Description: A class for writing to Google Sheets
 Author: John Naeder
-Created: 2021-06-02
+Created: 2021-06-01
 """
 import os
+
 from dotenv import load_dotenv
 import pandas as pd
-# TODO: Think about not using gspread
 import gspread as gs
 from gspread_dataframe import set_with_dataframe
 
@@ -15,25 +15,27 @@ load_dotenv()
 
 
 class GoogleSheets:
+    """
+    Uses a service account to write data to worksheets in a Google Spreadsheet.
+    Requires a google_credentials.json file to work.
+    """
     def __init__(self):
         self.service_account = gs.service_account("../google_credentials.json")
         self.sheet_url = os.environ.get("GOOGLE_SHEET_URL")
         self.spreadsheet = self.service_account.open_by_key(self.sheet_url)
 
-    def set_spreadsheet(self, sheet_url: str) -> None:
-        self.service_account.open_by_key(sheet_url)
+    def write_data_to_google_sheet(self, sheet_name: str, data: list) -> None:
+        """
+        Takes a sheet name finds that worksheet, and then converts the 
+        container data into a DataFrame and writes it to that sheet.
+        
+        Args:
+            sheet_name: Name of the worksheet to write to.
+            data: The data to write to worksheet
 
-    def write_to_google_sheets(self, groups) -> None:
+        Returns: None
+
         """
-        Writes each group container data to a Google Sheet via a DataFrame
-        :return: None
-        """
-        print("\nWriting to Google Sheets")
-        for items in groups.values():
-            ws_id = items["ws_id"]
-            container = items["container"]
-            # TODO: This should get the worksheet by name, not ID
-            ss = self.spreadsheet.get_worksheet_by_id(ws_id)
-            ss.clear()
-            set_with_dataframe(ss, pd.DataFrame(container))
-        print("Done!")
+        worksheet = self.spreadsheet.worksheet(sheet_name)
+        worksheet.clear()
+        set_with_dataframe(worksheet, pd.DataFrame(data))

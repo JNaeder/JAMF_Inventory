@@ -2,16 +2,18 @@
 Module Name: jamf_api.py
 Description: A class for making API calls to the JAMF API
 Author: John Naeder
-Created: 2021-06-02
+Created: 2021-06-01
 """
 
 import os
-from typing import Dict, List
-import requests
+from typing import Dict, Any
+
+from requests import session
 from dotenv import load_dotenv
-from computer import Computer
 
 load_dotenv()
+
+ComputerData = Dict[str, Any]
 
 
 class JamfAPI:
@@ -23,7 +25,7 @@ class JamfAPI:
         self.base_url = "https://saena.jamfcloud.com/"
         self.username = os.environ.get("JAMF_USERNAME")
         self.password = os.environ.get("JAMF_PASSWORD")
-        self.session = requests.session()
+        self.session = session()
         self.auth_token = self.get_auth_token()
         self.session.headers = {
             "Authorization": f"Bearer {self.auth_token}",
@@ -40,11 +42,11 @@ class JamfAPI:
         response = self.session.post(url, auth=(self.username, self.password))
         return response.json()["token"]
 
-    def api_request(self, current_page: int, size: int) -> List[Dict]:
+    def api_request(self, current_page: int, size: int) -> [ComputerData, int]:
         """
-        Get the data from the JAMF API, and return the results
+        Make an HTTP request to the JAMF API, and return the response.
         :param: None
-        :return: Dictionary of the http response Dataa
+        :return: HTTP Response is successful, otherwise None
         """
         url = self.base_url + ("/api/v1/computers-inventory"
                                "?section=GENERAL"
@@ -59,25 +61,7 @@ class JamfAPI:
         response = self.session.get(url)
         if response.status_code != 200:
             print(f"Response code was {response.status_code}")
-            return None
-        # amount = response.json()["totalCount"]
+            return [None, None]
+        total_count = response.json()["totalCount"]
         data = response.json()["results"]
-        return data
-
-    def make_all_requests(self,
-                          groups: Dict[str, list],
-                          page_size: int = 5) -> None:
-        current_page = 0
-        amount = 1000
-
-        # TODO: Think about how to manage "amount"
-        while (current_page * page_size) < amount:
-            print(".", end="" if current_page % 40 != 0 else "\n")
-            data = self.api_request(current_page, page_size)
-            current_page += 1
-            if data is None:
-                continue
-            for machine in data:
-                computer = Computer(machine=machine)
-                # TODO: This should be in another class
-                computer.write_to_group(groups)
+        return [data, total_count]
