@@ -1,5 +1,5 @@
 """
-Module Name: main
+Module Name: main.py
 Description: This module contains the class that calls the JAMF API,
 pareses the information, separates them into groups,
 and writes that information to Google sheets.
@@ -19,9 +19,12 @@ from computer import Computer
 load_dotenv()
 
 
+# TODO: This class is doing too many things.
+# TODO: Make a API class, google sheets class, data structure class, etc
+# TODO: Break these out into more files
 class JamfAPI:
     """
-    Main JAMF API class
+    JAMF API Class responsible for making API calls to the service and
     """
 
     def __init__(self):
@@ -52,7 +55,12 @@ class JamfAPI:
             "No Group": {"ws_id": 1822520265, "container": []},
         }
 
-    def get_auth_token(self):
+    def get_auth_token(self) -> str:
+        """
+        Uses username and password to get an authentication token from the
+        JAMF API.
+        :return:str Authentication token
+        """
         url = self.base_url + "api/v1/auth/token"
         response = self.session.post(url, auth=(self.username, self.password))
         return response.json()["token"]
@@ -82,7 +90,11 @@ class JamfAPI:
         data = response.json()["results"]
         return data
 
-    def write_to_google_sheets(self):
+    def write_to_google_sheets(self) -> None:
+        """
+        Writes each group container data to a Google Sheet via a DataFrame
+        :return: None
+        """
         print("\nWriting to Google Sheets")
         for items in self.groups.values():
             ws_id = items["ws_id"]
@@ -92,16 +104,21 @@ class JamfAPI:
             set_with_dataframe(ss, pd.DataFrame(container))
         print("Done!")
 
-    def get_computer_info(self):
+    def get_computer_info(self) -> None:
+        """
+        Main logic of this class. Gets all the inventory from the JAMF API
+        and then creates a Computer Instance. Then appends it to the corrct
+        group.
+        :return: None
+        """
         while (self.current_page * self.size) < self.amount:
+            self.current_page += 1
             data = self.api_request()
             if data is None:
-                self.current_page += 1
                 continue
             for machine in data:
                 computer = Computer(machine=machine)
                 computer.write_to_group(self.groups)
-            self.current_page += 1
         self.write_to_google_sheets()
 
 
