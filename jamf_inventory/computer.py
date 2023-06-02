@@ -5,7 +5,7 @@ information from JAMF and parsing it into usable information for Google Sheets
 Author: John Naeder
 Created: 2023-06-01
 """
-from typing import Dict, Any
+from typing import Dict, List, Any
 from datetime import datetime, timezone
 from app_names import app_names
 
@@ -17,16 +17,17 @@ class Computer:
     and parses it down for The Google Sheet
     """
 
+    # TODO: Type hinting
     def __init__(self, machine):
         self.machine: Dict[str, Any] = machine
         self.has_group: bool = False
         self.new_data: Dict[str, str] = {}
-        self.general_info = self.machine["general"]
-        self.applications = self.machine["applications"]
+        self.general_info: Dict[str, Any] = self.machine["general"]
+        self.applications: List[Dict[str, Any]] = self.machine["applications"]
         self.applications.sort(key=lambda x: x["name"])
-        self.hardware = self.machine["hardware"]
-        self.operating_system = self.machine["operatingSystem"]
-        self.groups = self.machine["groupMemberships"]
+        self.hardware: Dict[str, Any] = self.machine["hardware"]
+        self.operating_system: Dict[str, Any] = self.machine["operatingSystem"]
+        self.groups: List[Dict[str, Any]] = self.machine["groupMemberships"]
         self.write_new_data()
         self.get_apps()
 
