@@ -36,7 +36,7 @@ class JamfAPI:
         """
         Uses username and password to get an authentication token from the
         JAMF API.
-        :return:str Authentication token
+        Returns: The authentication token string
         """
         url = self.base_url + "api/v1/auth/token"
         response = self.session.post(url, auth=(self.username, self.password))
@@ -44,9 +44,14 @@ class JamfAPI:
 
     def api_request(self, current_page: int, size: int) -> [ComputerData, int]:
         """
-        Make an HTTP request to the JAMF API, and return the response.
-        :param: None
-        :return: HTTP Response is successful, otherwise None
+        Makes an HTTP request to the JAMF API, and return the response.
+        Args:
+            current_page: the page that is being requested
+            size: the amount of computers to get per request
+
+        Returns: A list where the element 0 is the computer data and element
+        1 is the total amount of machines in JAMF.
+
         """
         url = self.base_url + ("/api/v1/computers-inventory"
                                "?section=GENERAL"

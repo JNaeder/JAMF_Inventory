@@ -21,13 +21,13 @@ class Computer:
     """
 
     def __init__(self, machine: ComputerData):
-        self.machine: Dict[str, Any] = machine
+        self.machine: ComputerData = machine
         self.has_group: bool = False
         self.parsed_data: Dict[str, str] = {}
-        self.general_info: Dict[str, Any] = self.machine["general"]
-        self.hardware: Dict[str, Any] = self.machine["hardware"]
-        self.operating_system: Dict[str, Any] = self.machine["operatingSystem"]
-        self.groups: List[Dict[str, Any]] = self.machine["groupMemberships"]
+        self.general_info: ComputerData = self.machine["general"]
+        self.hardware: ComputerData = self.machine["hardware"]
+        self.operating_system: ComputerData = self.machine["operatingSystem"]
+        self.groups: List[ComputerData] = self.machine["groupMemberships"]
         self.write_new_data()
         self.get_apps()
 
@@ -49,14 +49,14 @@ class Computer:
         contact.
 
         Returns:
-            Tuple of the last contact time, and the amount of days.
-
+            Tuple containing the last contact time, and the amount of days.
         """
         last_contact_time = self.general_info["lastContactTime"]
-        last_contact = datetime.fromisoformat(last_contact_time) \
-            if last_contact_time else None
-        days_since_contact = (datetime.now(timezone.utc) - last_contact).days \
-            if last_contact_time else 0
+        if not last_contact_time:
+            return 0, None
+
+        last_contact = datetime.fromisoformat(last_contact_time)
+        days_since_contact = (datetime.now(timezone.utc) - last_contact).days
         return last_contact, days_since_contact
 
     def get_hd_data(self) -> (int, int):
@@ -90,10 +90,7 @@ class Computer:
     def get_apps(self) -> None:
         """
         Goes through the list of apps form app_names, and writes the version
-        to the parsed data.
-
-        Returns: None
-
+        that's on the computer to the parsed data.
         """
         applications = self.machine["applications"]
         applications.sort(key=lambda x: x["name"])
@@ -107,9 +104,8 @@ class Computer:
     def write_new_data(self) -> None:
         """
         Responsible for doing the heavy lifting as far as parsing data goes.
-
-        Returns: None
-
+        The order that these are written determines the order that it shows
+        up in the Google Sheet.
         """
         last_contact, days_since_contact = self.get_contact_time()
         total_space, available_space = self.get_hd_data()

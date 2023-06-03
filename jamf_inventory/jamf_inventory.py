@@ -38,8 +38,6 @@ class JamfInventory:
         """
         Calls the JAMF API and continuously calls the api_request
         method until all computer data has been written to groups.
-
-        Returns: None
         """
         jamf_api = JamfAPI()
         total_count = 1000
@@ -66,9 +64,6 @@ class JamfInventory:
 
         Args:
             computer: The Computer class whose data should be copied
-
-        Returns: None
-
         """
         data = computer.get_parsed_data()
 
@@ -88,9 +83,6 @@ class JamfInventory:
         """
         Responsible for taking all the data from the groups,
         and writing them to the appropriate Google Sheet
-
-        Returns: None
-
         """
         print("\nWriting to Google Sheets")
         for sheet_name, container in self.groups.items():
@@ -100,9 +92,6 @@ class JamfInventory:
     def run_program(self) -> None:
         """
         Main logic. Gets all the data, and then writes all the data.
-
-        Returns: None
-
         """
         print("Starting")
         self.get_computer_data()
