@@ -32,21 +32,33 @@ class JamfAPI:
             "Content-Type": "application/json"
         }
 
+    def has_auth_token(self) -> bool:
+        """Checks if there is some auth token in instance"""
+        return self.auth_token is not None
+
     def get_auth_token(self) -> str:
         """
         Uses username and password to get an authentication token from the
         JAMF API.
-        :return:str Authentication token
+        Returns: The authentication token string
         """
         url = self.base_url + "api/v1/auth/token"
         response = self.session.post(url, auth=(self.username, self.password))
+
+        if response.status_code != 200:
+            return None
         return response.json()["token"]
 
     def api_request(self, current_page: int, size: int) -> [ComputerData, int]:
         """
-        Make an HTTP request to the JAMF API, and return the response.
-        :param: None
-        :return: HTTP Response is successful, otherwise None
+        Makes an HTTP request to the JAMF API, and return the response.
+        Args:
+            current_page: the page that is being requested
+            size: the amount of computers to get per request
+
+        Returns: A list where the element 0 is the computer data and element
+        1 is the total amount of machines in JAMF.
+
         """
         url = self.base_url + ("/api/v1/computers-inventory"
                                "?section=GENERAL"

@@ -32,9 +32,6 @@ class GoogleSheets:
         Args:
             sheet_name: Name of the worksheet to write to.
             data: The data to write to worksheet
-
-        Returns: None
-
         """
         worksheet = self.spreadsheet.worksheet(sheet_name)
         worksheet.clear()

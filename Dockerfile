@@ -7,4 +7,4 @@ COPY . /app
 
 RUN pip install -r requirements.txt
 
-CMD ["python", "main.py"]
+CMD ["python", "./jamf_inventory/jamf_inventory.py"]
