@@ -46,6 +46,8 @@ class JamfAPI:
         response = self.session.post(url, auth=(self.username, self.password))
 
         if response.status_code != 200:
+            print("Username: ", self.username)
+            print("Password: ", self.password)
             return None
         return response.json()["token"]
 
