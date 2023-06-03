@@ -32,6 +32,10 @@ class JamfAPI:
             "Content-Type": "application/json"
         }
 
+    def has_auth_token(self) -> bool:
+        """Checks if there is some auth token in instance"""
+        return self.auth_token is not None
+
     def get_auth_token(self) -> str:
         """
         Uses username and password to get an authentication token from the
@@ -40,6 +44,9 @@ class JamfAPI:
         """
         url = self.base_url + "api/v1/auth/token"
         response = self.session.post(url, auth=(self.username, self.password))
+
+        if response.status_code != 200:
+            return None
         return response.json()["token"]
 
     def api_request(self, current_page: int, size: int) -> [ComputerData, int]:

@@ -43,6 +43,10 @@ class JamfInventory:
         total_count = 1000
         current_page = 0
 
+        if not jamf_api.has_auth_token():
+            print("Could not get Auth Token\nExiting...")
+            exit()
+
         while (current_page * self.page_size) < total_count:
             print(".", end="" if current_page % 40 != 0 else "\n")
             data, count = jamf_api.api_request(current_page, self.page_size)
