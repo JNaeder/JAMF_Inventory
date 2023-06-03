@@ -31,6 +31,8 @@ class JamfAPI:
             "Authorization": f"Bearer {self.auth_token}",
             "Content-Type": "application/json"
         }
+        print("Username: ", self.username)
+        print("Password: ", self.password)
 
     def has_auth_token(self) -> bool:
         """Checks if there is some auth token in instance"""
@@ -46,8 +48,6 @@ class JamfAPI:
         response = self.session.post(url, auth=(self.username, self.password))
 
         if response.status_code != 200:
-            print("Username: ", self.username)
-            print("Password: ", self.password)
             return None
         return response.json()["token"]
 
