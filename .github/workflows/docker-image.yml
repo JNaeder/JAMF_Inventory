@@ -26,3 +26,12 @@ jobs:
 
     - name: Push Docker image
       run: docker push jnaeder324test.azurecr.io/jamf-inventory:latest
+
+    - name: Create Azure Task
+      run: | 
+        az acr task create \
+        --name jamf-inventory-schedule \
+        --registry jnaeder324test \
+        --cmd jnaeder324test.azurecr.io/jamf-inventory:latest \
+        --schedule "0 21 * * *" \
+        --context /dev/null
