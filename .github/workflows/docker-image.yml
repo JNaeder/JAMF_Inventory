@@ -14,5 +14,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
+    - uses: azure/docker-login@v1
+      with:
+        login-server: jnaeder324test.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
     - name: Build the Docker image
       run: docker build -t jnaeder324test.azurecr.io/jamf-inventory:latest .
+
+    - name: Push Docker image
+      run: docker push jnaeder324test.azurecr.io/jamf-inventory:latest
