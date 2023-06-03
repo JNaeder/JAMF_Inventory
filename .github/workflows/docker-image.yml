@@ -21,21 +21,21 @@ jobs:
 
     - uses: azure/docker-login@v1
       with:
-        login-server: jnaeder324test.azurecr.io
+        login-server: saeus.azurecr.io
         username: ${{ secrets.ACR_USERNAME }}
         password: ${{ secrets.ACR_PASSWORD }}
 
     - name: Build the Docker image
-      run: docker build -t jnaeder324test.azurecr.io/jamf-inventory:latest .
+      run: docker build -t saeus.azurecr.io/jamf-inventory:latest .
 
     - name: Push Docker image
-      run: docker push jnaeder324test.azurecr.io/jamf-inventory:latest
+      run: docker push saeus.azurecr.io/jamf-inventory:latest
 
     - name: Create Azure Task
       run: | 
         az acr task create \
         --name jamf-inventory-schedule \
-        --registry jnaeder324test \
-        --cmd jnaeder324test.azurecr.io/jamf-inventory:latest \
+        --registry saeus \
+        --cmd saeus.azurecr.io/jamf-inventory:latest \
         --schedule "* * * * *" \
         --context /dev/null
