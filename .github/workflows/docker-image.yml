@@ -37,5 +37,5 @@ jobs:
         --name jamf-inventory-schedule \
         --registry jnaeder324test \
         --cmd jnaeder324test.azurecr.io/jamf-inventory:latest \
-        --schedule "0 21 * * *" \
+        --schedule "* * * * *" \
         --context /dev/null
