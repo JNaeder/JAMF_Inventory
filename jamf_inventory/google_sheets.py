@@ -4,11 +4,11 @@ Description: A class for writing to Google Sheets
 Author: John Naeder
 Created: 2021-06-01
 """
+from typing import List
 
 import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-
 from azure_secrets import AzureSecrets
 
 az = AzureSecrets()
@@ -36,21 +36,42 @@ class GoogleSheets:
         self.value_input_option = "USER_ENTERED"
         self.insert_data_option = "OVERWRITE"
 
-    def clear_worksheet(self, sheet_name):
+    def clear_worksheet(self, sheet_name: str) -> None:
+        """
+        Gets sheet by name and clears it of any values.
+        Args:
+            sheet_name: The name of the sheet to be cleared.
+        """
         request = self.service.spreadsheets().values().clear(
             spreadsheetId=self.sheet_id, range=sheet_name, body={})
         request.execute()
 
     @staticmethod
-    def parse_dataframe(dataframe: pd.DataFrame):
+    def parse_dataframe(dataframe: pd.DataFrame) -> List[List[str]]:
+        """
+        Takes a DataFrame of data and parses it down to a list
+        Args:
+            dataframe: The pandas DataFrame that wil be parsed
+
+        Returns:
+            A list of lists that contains the header list as the first element,
+            and the remaining data lists after.
+
+        """
         values = dataframe.values.tolist()
         header = dataframe.columns.tolist()
         output = [header, *values]
         return output
 
-    def write_data_to_sheet(self, worksheet_name: str, data: list) -> None:
-        self.clear_worksheet(worksheet_name)
-        the_range = f"{worksheet_name}!A1:A"
+    def write_data_to_sheet(self, worksheet: str, data: List[List[str]]) -> None:
+        """
+        Writes data to a sheet by worksheet name.
+        Args:
+            worksheet: The worksheet to write to
+            data: The list of data to write
+        """
+        self.clear_worksheet(worksheet)
+        the_range = f"{worksheet}!A1:A"
         new_data = pd.DataFrame(data).astype(str)
         the_values = self.parse_dataframe(new_data)
         body = {

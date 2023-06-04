@@ -7,6 +7,7 @@ Imports JamfAPI, GoogleSheets and Computer classes.
 Author: John Naeder
 Created: 2021-06-01
 """
+import sys
 
 from jamf_api import JamfAPI
 from google_sheets import GoogleSheets
@@ -45,7 +46,7 @@ class JamfInventory:
 
         if not jamf_api.has_auth_token():
             print("Could not get Auth Token\nExiting...")
-            exit()
+            sys.exit()
 
         while (current_page * self.page_size) < total_count:
             print(".", end="" if current_page % 40 != 0 else "\n")

@@ -8,7 +8,6 @@ Created: 2021-06-01
 from typing import Dict, Any
 
 from requests import session
-from dotenv import load_dotenv
 
 from azure_secrets import AzureSecrets
 
