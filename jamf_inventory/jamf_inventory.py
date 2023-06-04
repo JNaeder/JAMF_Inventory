@@ -8,6 +8,7 @@ Author: John Naeder
 Created: 2021-06-01
 """
 import sys
+from datetime import datetime
 
 from jamf_api import JamfAPI
 from google_sheets import GoogleSheets
@@ -98,7 +99,8 @@ class JamfInventory:
         """
         Main logic. Gets all the data, and then writes all the data.
         """
-        print("Starting")
+        date_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+        print(f"Starting -> {date_time}")
         self.get_computer_data()
         self.write_all_data_to_sheets()
         print("Done")
