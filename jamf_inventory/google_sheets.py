@@ -72,7 +72,7 @@ class GoogleSheets:
         """
         self.clear_worksheet(worksheet)
         the_range = f"{worksheet}!A1:A"
-        new_data = pd.DataFrame(data).astype(str)
+        new_data = pd.DataFrame(data).fillna("").astype(str)
         the_values = self.parse_dataframe(new_data)
         body = {
             "range": the_range,
