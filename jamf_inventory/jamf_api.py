@@ -5,13 +5,15 @@ Author: John Naeder
 Created: 2021-06-01
 """
 
-import os
 from typing import Dict, Any
 
 from requests import session
 from dotenv import load_dotenv
 
-load_dotenv()
+from azure_secrets import AzureSecrets
+
+az = AzureSecrets()
+
 
 ComputerData = Dict[str, Any]
 
@@ -23,16 +25,14 @@ class JamfAPI:
 
     def __init__(self):
         self.base_url = "https://saena.jamfcloud.com/"
-        self.username = os.environ.get("JAMF_USERNAME")
-        self.password = os.environ.get("JAMF_PASSWORD")
+        self.username = az.get_secret("JAMF-USERNAME")
+        self.password = az.get_secret("JAMF-PASSWORD")
         self.session = session()
         self.auth_token = self.get_auth_token()
         self.session.headers = {
             "Authorization": f"Bearer {self.auth_token}",
             "Content-Type": "application/json"
         }
-        print("Username: ", self.username)
-        print("Password: ", self.password)
 
     def has_auth_token(self) -> bool:
         """Checks if there is some auth token in instance"""

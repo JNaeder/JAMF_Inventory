@@ -91,7 +91,7 @@ class JamfInventory:
         print("\nWriting to Google Sheets")
         for sheet_name, container in self.groups.items():
             google_sheets = GoogleSheets()
-            google_sheets.write_data_to_google_sheet(sheet_name, container)
+            google_sheets.write_data_to_sheet(sheet_name, container)
 
     def run_program(self) -> None:
         """

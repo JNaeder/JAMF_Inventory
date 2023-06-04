@@ -15,10 +15,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
     - uses: azure/docker-login@v1
       with:
         login-server: saeus.azurecr.io
@@ -30,12 +26,3 @@ jobs:
 
     - name: Push Docker image
       run: docker push saeus.azurecr.io/jamf-inventory:latest
-
-    - name: Create Azure Task
-      run: | 
-        az acr task create \
-        --name jamf-inventory-schedule \
-        --registry saeus \
-        --cmd saeus.azurecr.io/jamf-inventory:latest \
-        --schedule "* * * * *" \
-        --context /dev/null
