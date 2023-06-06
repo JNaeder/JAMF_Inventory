@@ -9,6 +9,7 @@ Created: 2021-06-01
 """
 import sys
 from datetime import datetime
+import pytz
 
 from jamf_api import JamfAPI
 from google_sheets import GoogleSheets
@@ -95,12 +96,19 @@ class JamfInventory:
             google_sheets = GoogleSheets()
             google_sheets.write_data_to_sheet(sheet_name, container)
 
+    @staticmethod
+    def get_date_time() -> str:
+        """
+        Returns the current date and time from the EST Timezone
+        """
+        timezone = pytz.timezone("America/New_York")
+        return datetime.now(timezone).strftime("%m/%d/%Y, %I:%M:%S %p")
+
     def run_program(self) -> None:
         """
         Main logic. Gets all the data, and then writes all the data.
         """
-        date_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-        print(f"Starting -> {date_time}")
+        print(f"Starting -> {self.get_date_time()}")
         self.get_computer_data()
         self.write_all_data_to_sheets()
         print("Done")
